@@ -99,14 +99,19 @@ export const POST: RequestHandler = async ({ request }) => {
 			description: description || null,
 			category,
 			price: Math.round(price * 100), // Convert to cents
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString()
+			createdAt: new Date(),
+			updatedAt: new Date()
 		};
 
-		const newItem = await db
+		const result = await db
 			.insert(items)
-			.values(itemData)
-			.returning();
+			.values(itemData);
+
+		// MySQL doesn't support RETURNING, so we need to fetch the inserted item
+		const newItem = await db
+			.select()
+			.from(items)
+			.where(eq(items.id, result[0].insertId));
 
 		const duration = Date.now() - startTime;
 		log.database('Item created successfully', {
@@ -197,14 +202,19 @@ export const PUT: RequestHandler = async ({ request }) => {
 			description: description || null,
 			category,
 			price: Math.round(price * 100), // Convert to cents
-			updatedAt: new Date().toISOString()
+			updatedAt: new Date()
 		};
 
-		const updatedItem = await db
+		await db
 			.update(items)
 			.set(updateData)
-			.where(eq(items.id, id))
-			.returning();
+			.where(eq(items.id, id));
+
+		// MySQL doesn't support RETURNING, so we need to fetch the updated item
+		const updatedItem = await db
+			.select()
+			.from(items)
+			.where(eq(items.id, id));
 
 		const duration = Date.now() - startTime;
 
@@ -306,11 +316,14 @@ export const DELETE: RequestHandler = async ({ request }) => {
 			return json({ error: 'ID is required' }, { status: 400 });
 		}
 
-		const deletedItem = await db.delete(items).where(eq(items.id, id)).returning();
+		// First fetch the item to return it
+		const itemToDelete = await db
+			.select()
+			.from(items)
+			.where(eq(items.id, id));
 
-		const duration = Date.now() - startTime;
-
-		if (deletedItem.length === 0) {
+		if (itemToDelete.length === 0) {
+			const duration = Date.now() - startTime;
 			log.warn('Item not found for deletion', {
 				requestId,
 				method: 'DELETE',
@@ -330,6 +343,11 @@ export const DELETE: RequestHandler = async ({ request }) => {
 			return json({ error: 'Item not found' }, { status: 404 });
 		}
 
+		// MySQL doesn't support RETURNING, so we delete after fetching
+		await db.delete(items).where(eq(items.id, id));
+
+		const duration = Date.now() - startTime;
+
 		log.database('Item deleted successfully', {
 			operation: 'delete',
 			table: 'items',
@@ -348,7 +366,7 @@ export const DELETE: RequestHandler = async ({ request }) => {
 			itemId: id
 		});
 
-		return json({ message: 'Item deleted successfully' });
+		return json(itemToDelete[0]);
 	} catch (error) {
 		const duration = Date.now() - startTime;
 		logError(error as Error, {

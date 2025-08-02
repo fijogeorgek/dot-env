@@ -1,16 +1,11 @@
-import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
+import { mysqlTable, int, varchar, timestamp } from 'drizzle-orm/mysql-core';
 
-export const user = sqliteTable('user', {
-	id: integer('id').primaryKey(),
-	age: integer('age')
-});
-
-export const items = sqliteTable('items', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	name: text('name').notNull(),
-	description: text('description'),
-	category: text('category').notNull(),
-	price: integer('price').notNull(), // Store price in cents
-	createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
-	updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString())
+export const items = mysqlTable('items', {
+	id: int('id').primaryKey().autoincrement(),
+	name: varchar('name', { length: 255 }).notNull(),
+	description: varchar('description', { length: 1000 }),
+	category: varchar('category', { length: 100 }).notNull(),
+	price: int('price').notNull(),
+	createdAt: timestamp('created_at').defaultNow(),
+	updatedAt: timestamp('updated_at').defaultNow().onUpdateNow()
 });
