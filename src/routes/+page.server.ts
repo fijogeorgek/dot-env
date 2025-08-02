@@ -2,6 +2,8 @@ import { env as privateEnv } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
 import { STATIC_PRIVATE_KEY } from '$env/static/private';
 import { PUBLIC_STATIC_KEY } from '$env/static/public';
+import { db } from '$lib/server/db';
+import { items } from '$lib/server/db/schema';
 
 import type { PageServerLoad } from './$types';
 
@@ -15,7 +17,16 @@ export const load: PageServerLoad = async () => {
 	const staticPublicKey = PUBLIC_STATIC_KEY;
 	const staticPrivateKey = STATIC_PRIVATE_KEY;
 
-	// Return the environment variables to the client
+	// Load items from database
+	let allItems = [];
+	try {
+		allItems = await db.select().from(items).orderBy(items.createdAt);
+	} catch (error) {
+		console.error('Error loading items:', error);
+		// Continue without items if database is not ready
+	}
+
+	// Return the environment variables and items to the client
 	// Note: Be careful about exposing sensitive data to the client
 	return {
 		envVars: {
@@ -31,6 +42,7 @@ export const load: PageServerLoad = async () => {
 		serverInfo: {
 			timestamp: new Date().toISOString(),
 			nodeEnv: process.env.NODE_ENV || 'development'
-		}
+		},
+		items: allItems
 	};
 };
