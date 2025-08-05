@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: adminer-ingress
+  namespace: dot-env
+  labels:
+    app: dot-env-adminer
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Basic auth for security (optional)
+    # nginx.ingress.kubernetes.io/auth-type: basic
+    # nginx.ingress.kubernetes.io/auth-secret: adminer-auth
+    # nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - Adminer'
+spec:
+  tls:
+  - hosts:
+    - adminer.localhost  # Replace with your actual subdomain
+    - adminer.your-domain.com  # Replace with your actual subdomain
+    secretName: adminer-tls
+  rules:
+  - host: adminer.localhost  # Replace with your actual subdomain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: adminer-service
+            port:
+              number: 8080
+  - host: adminer.your-domain.com  # Replace with your actual subdomain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: adminer-service
+            port:
+              number: 8080

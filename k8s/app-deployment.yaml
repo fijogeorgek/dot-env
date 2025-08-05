@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dot-env-app
+  namespace: dot-env
+  labels:
+    app: dot-env-sveltekit
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dot-env-sveltekit
+  template:
+    metadata:
+      labels:
+        app: dot-env-sveltekit
+    spec:
+      containers:
+      - name: sveltekit-app
+        # Replace with your actual image registry and tag
+        # Example: your-registry/dot-env:latest
+        image: dot-env:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        # Environment variables from ConfigMap
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: dot-env-config
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: dot-env-config
+              key: PORT
+        - name: HOST
+          valueFrom:
+            configMapKeyRef:
+              name: dot-env-config
+              key: HOST
+        - name: PUBLIC_DYNAMIC_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: dot-env-config
+              key: PUBLIC_DYNAMIC_KEY
+        - name: PUBLIC_STATIC_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: dot-env-config
+              key: PUBLIC_STATIC_KEY
+        # Environment variables from Secrets
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: dot-env-secrets
+              key: DATABASE_URL
+        - name: DYNAMIC_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dot-env-secrets
+              key: DYNAMIC_PRIVATE_KEY
+        - name: STATIC_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dot-env-secrets
+              key: STATIC_PRIVATE_KEY
+        - name: AXIOM_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: dot-env-secrets
+              key: AXIOM_TOKEN
+        - name: AXIOM_DATASET
+          valueFrom:
+            secretKeyRef:
+              name: dot-env-secrets
+              key: AXIOM_DATASET
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: app-data
+          mountPath: /app/data
+      volumes:
+      - name: app-data
+        emptyDir: {}
+      # Uncomment if you need to pull from a private registry
+      # imagePullSecrets:
+      # - name: registry-secret

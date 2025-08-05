@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dot-env-config
+  namespace: dot-env
+  labels:
+    app: dot-env-sveltekit
+data:
+  # Application configuration
+  NODE_ENV: "production"
+  PORT: "3000"
+  HOST: "0.0.0.0"
+  
+  # Database configuration (non-sensitive)
+  DATABASE_HOST: "mysql-service"
+  DATABASE_PORT: "3306"
+  DATABASE_NAME: "dotenv"
+  DATABASE_USER: "dotenv_user"
+  
+  # Domain configuration
+  DOMAIN_NAME: "localhost"
+  
+  # Public environment variables (exposed to client)
+  PUBLIC_DYNAMIC_KEY: "your-public-key-here"
+  PUBLIC_STATIC_KEY: "your-static-public-key-here"

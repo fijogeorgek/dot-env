@@ -10,11 +10,28 @@ A SvelteKit application with MySQL database, Drizzle ORM, and Axiom logging inte
 - **Let's Encrypt** automatic SSL certificates
 - **Axiom Logging** integration
 - **Docker** support for easy deployment
+- **Kubernetes** support for production deployment
 - **Environment Variables** demonstration
 
 ## Quick Start
 
-### Option 1: Docker (Recommended)
+### Option 1: Kubernetes (Production)
+
+1. **Deploy to Kubernetes:**
+
+   ```bash
+   # Configure your values in k8s/secret.yaml and k8s/configmap.yaml
+   # Build and push your Docker image
+   ./k8s-scripts.sh deploy
+   ```
+
+2. **Access the application:**
+   - Application: https://your-domain.com
+   - Database Admin: https://adminer.your-domain.com
+
+See [KUBERNETES.md](./KUBERNETES.md) for detailed Kubernetes deployment instructions.
+
+### Option 2: Docker (Local Development)
 
 1. **Setup and start with Docker:**
 
@@ -31,7 +48,7 @@ A SvelteKit application with MySQL database, Drizzle ORM, and Axiom logging inte
 
 See [DOCKER.md](./DOCKER.md) for detailed Docker instructions and [NGINX.md](./NGINX.md) for nginx and SSL setup.
 
-### Option 2: Local Development
+### Option 3: Local Development
 
 1. **Install dependencies:**
 
@@ -140,9 +157,11 @@ See [AXIOM_LOGGING.md](./AXIOM_LOGGING.md) for logging documentation.
 │   └── routes/               # SvelteKit routes
 ├── drizzle/                  # Database migrations
 ├── init-db/                  # Docker database initialization
+├── k8s/                      # Kubernetes manifests
 ├── docker-compose.yml        # Docker services configuration
 ├── Dockerfile               # Application container
-└── docker-scripts.sh        # Docker management scripts
+├── docker-scripts.sh        # Docker management scripts
+└── k8s-scripts.sh           # Kubernetes management scripts
 ```
 
 ## Contributing
