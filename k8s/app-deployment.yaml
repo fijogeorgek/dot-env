@@ -17,10 +17,12 @@ spec:
     spec:
       containers:
       - name: sveltekit-app
-        # Replace with your actual image registry and tag
+       # Replace with your actual image registry and tag
         # Example: your-registry/dot-env:latest
+        # Using local image loaded into minikube
         image: dot-env:latest
-        imagePullPolicy: Always
+        imagePullPolicy: Never
+          # imagePullPolicy: Always
         ports:
         - containerPort: 3000
           name: http
