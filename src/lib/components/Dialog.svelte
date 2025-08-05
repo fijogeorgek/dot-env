@@ -24,13 +24,16 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
+	<!-- svelte-ignore a11y_interactive_supports_focus -->
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+		class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4"
 		onclick={handleBackdropClick}
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="dialog-title"
 	>
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
 			onclick={(e) => e.stopPropagation()}

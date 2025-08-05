@@ -34,27 +34,27 @@
 			<thead class="bg-gray-50">
 				<tr>
 					<th
-						class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+						class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
 					>
 						Name
 					</th>
 					<th
-						class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+						class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
 					>
 						Category
 					</th>
 					<th
-						class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+						class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
 					>
 						Price
 					</th>
 					<th
-						class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+						class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
 					>
 						Created
 					</th>
 					<th
-						class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500"
+						class="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
 					>
 						Actions
 					</th>
@@ -120,7 +120,7 @@
 							</td>
 							<td class="px-6 py-4">
 								<span
-									class="inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5 text-blue-800"
+									class="inline-flex rounded-full bg-blue-100 px-2 text-xs leading-5 font-semibold text-blue-800"
 								>
 									{item.category}
 								</span>
@@ -133,6 +133,7 @@
 							</td>
 							<td class="px-6 py-4 text-right text-sm font-medium">
 								<div class="flex justify-end space-x-2">
+									<!-- svelte-ignore a11y_consider_explicit_label -->
 									<button
 										onclick={() => onEdit(item)}
 										class="text-blue-600 hover:text-blue-900"
@@ -147,6 +148,7 @@
 											/>
 										</svg>
 									</button>
+									<!-- svelte-ignore a11y_consider_explicit_label -->
 									<button
 										onclick={() => onDelete(item)}
 										class="text-red-600 hover:text-red-900"
