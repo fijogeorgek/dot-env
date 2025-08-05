@@ -1,4 +1,47 @@
 services:
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: dot-env-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_www:/var/www/certbot:ro
+      - certbot_conf:/etc/letsencrypt:ro
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
+    depends_on:
+      - app
+    networks:
+      - app-network
+    command: >
+      sh -c "
+        # Generate self-signed certificate if none exists
+        if [ ! -f /etc/nginx/ssl/default.crt ]; then
+          mkdir -p /etc/nginx/ssl &&
+          openssl req -x509 -nodes -days 365 -newkey rsa:2048
+            -keyout /etc/nginx/ssl/default.key
+            -out /etc/nginx/ssl/default.crt
+            -subj '/C=US/ST=State/L=City/O=Organization/CN=localhost'
+        fi &&
+        nginx -g 'daemon off;'
+      "
+
+  # Let's Encrypt Certbot
+  certbot:
+    image: certbot/certbot
+    container_name: dot-env-certbot
+    restart: unless-stopped
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
   # MySQL Database
   db:
     image: mysql:8.0
@@ -28,8 +71,8 @@ services:
       dockerfile: Dockerfile
     container_name: dot-env-app
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=mysql://dotenv_user:dotenv_password@db:3306/dotenv
@@ -67,6 +110,10 @@ volumes:
   mysql_data:
     driver: local
   app_data:
+    driver: local
+  certbot_www:
+    driver: local
+  certbot_conf:
     driver: local
 
 networks:

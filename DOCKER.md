@@ -10,31 +10,47 @@ This document explains how to run the dot-env SvelteKit application using Docker
 ## Quick Start
 
 1. **Setup environment variables:**
+
    ```bash
    cp .env.docker .env
    # Edit .env file with your actual values
    ```
 
 2. **Start the application:**
+
    ```bash
    ./docker-scripts.sh start
    ```
 
 3. **Access the application:**
-   - Application: http://localhost:3000
+   - Application (via nginx): https://localhost
+   - Application (direct): http://localhost:3000
    - Database Admin (Adminer): http://localhost:8080
    - Database: localhost:3306
 
 ## Services
 
-The Docker setup includes three services:
+The Docker setup includes five services:
 
-### 1. Application (`app`)
-- **Port:** 3000
+### 1. Nginx Reverse Proxy (`nginx`)
+
+- **Ports:** 80 (HTTP), 443 (HTTPS)
+- **Description:** Nginx reverse proxy with SSL termination
+- **Features:** SSL certificates, security headers, caching, rate limiting
+
+### 2. Let's Encrypt Certbot (`certbot`)
+
+- **Description:** Automatic SSL certificate management
+- **Features:** Certificate issuance and renewal
+
+### 3. Application (`app`)
+
+- **Port:** 3000 (internal)
 - **Description:** SvelteKit Node.js application
 - **Health Check:** HTTP GET to localhost:3000
 
-### 2. Database (`db`)
+### 4. Database (`db`)
+
 - **Port:** 3306
 - **Description:** MySQL 8.0 database
 - **Credentials:**
@@ -43,7 +59,8 @@ The Docker setup includes three services:
   - User: `dotenv_user`
   - Password: `dotenv_password`
 
-### 3. Database Admin (`adminer`)
+### 5. Database Admin (`adminer`)
+
 - **Port:** 8080
 - **Description:** Web-based database administration tool
 - **Access:** http://localhost:8080
@@ -53,10 +70,12 @@ The Docker setup includes three services:
 The application uses the following environment variables:
 
 ### Required
+
 - `DATABASE_URL`: MySQL connection string
 - `NODE_ENV`: Environment (production/development)
 
 ### Optional
+
 - `DYNAMIC_PRIVATE_KEY`: Server-side dynamic key
 - `PUBLIC_DYNAMIC_KEY`: Client-side dynamic key
 - `STATIC_PRIVATE_KEY`: Build-time private key
@@ -93,6 +112,13 @@ Use the provided `docker-scripts.sh` for easy management:
 
 # Clean up everything (removes volumes!)
 ./docker-scripts.sh cleanup
+
+# Setup domain and SSL (production)
+./docker-scripts.sh setup-domain yourdomain.com admin@yourdomain.com
+./docker-scripts.sh setup-ssl yourdomain.com admin@yourdomain.com
+
+# Reload nginx configuration
+./docker-scripts.sh reload-nginx
 ```
 
 ## Manual Docker Commands
@@ -127,6 +153,7 @@ docker-compose exec db mysql -u root -p
    - Database: `dotenv`
 
 2. **Via MySQL Client:**
+
    ```bash
    mysql -h localhost -P 3306 -u dotenv_user -p dotenv
    ```
@@ -156,12 +183,64 @@ docker-compose exec app npm run db:migrate
 docker-compose exec app npm run db:studio
 ```
 
+## Nginx and SSL Setup
+
+### Development (Self-Signed Certificate)
+
+The nginx service automatically generates a self-signed certificate for development:
+
+```bash
+./docker-scripts.sh start
+# Access via: https://localhost (expect certificate warning)
+```
+
+### Production (Let's Encrypt Certificate)
+
+For production with a real domain:
+
+1. **Configure DNS**: Point your domain to your server's IP address
+2. **Setup domain configuration**:
+   ```bash
+   ./docker-scripts.sh setup-domain yourdomain.com admin@yourdomain.com
+   ```
+3. **Start services**:
+   ```bash
+   ./docker-scripts.sh start
+   ```
+4. **Obtain SSL certificate**:
+   ```bash
+   ./docker-scripts.sh setup-ssl yourdomain.com admin@yourdomain.com
+   ```
+
+### Testing SSL Setup
+
+Use Let's Encrypt staging environment for testing:
+
+```bash
+./docker-scripts.sh setup-ssl yourdomain.com admin@yourdomain.com true
+```
+
+### Nginx Management
+
+```bash
+# Test nginx configuration
+docker-compose exec nginx nginx -t
+
+# Reload nginx (after config changes)
+./docker-scripts.sh reload-nginx
+
+# View nginx logs
+./docker-scripts.sh logs nginx
+```
+
 ## Volumes
 
 The setup uses Docker volumes for data persistence:
 
 - `mysql_data`: MySQL database files
 - `app_data`: Application data (if needed)
+- `certbot_www`: Let's Encrypt challenge files
+- `certbot_conf`: SSL certificates and Let's Encrypt configuration
 
 ## Networking
 
@@ -172,6 +251,7 @@ All services communicate through a custom Docker network (`app-network`).
 ### Services Won't Start
 
 1. Check if ports are already in use:
+
    ```bash
    netstat -tulpn | grep :3000
    netstat -tulpn | grep :3306
@@ -186,11 +266,13 @@ All services communicate through a custom Docker network (`app-network`).
 ### Database Connection Issues
 
 1. Ensure the database service is healthy:
+
    ```bash
    docker-compose ps
    ```
 
 2. Check database logs:
+
    ```bash
    docker-compose logs db
    ```
@@ -200,6 +282,7 @@ All services communicate through a custom Docker network (`app-network`).
 ### Application Errors
 
 1. Check application logs:
+
    ```bash
    docker-compose logs app
    ```
@@ -214,11 +297,13 @@ All services communicate through a custom Docker network (`app-network`).
 ## Development vs Production
 
 ### Development
+
 - Use `docker-compose.override.yml` for development-specific settings
 - Mount source code as volumes for hot reloading
 - Use development database credentials
 
 ### Production
+
 - Use production environment variables
 - Ensure proper secrets management
 - Use production-grade database setup
@@ -235,11 +320,13 @@ All services communicate through a custom Docker network (`app-network`).
 ## Backup and Recovery
 
 ### Database Backup
+
 ```bash
 docker-compose exec db mysqldump -u root -p dotenv > backup.sql
 ```
 
 ### Database Restore
+
 ```bash
 docker-compose exec -T db mysql -u root -p dotenv < backup.sql
 ```
@@ -247,6 +334,7 @@ docker-compose exec -T db mysql -u root -p dotenv < backup.sql
 ## Monitoring
 
 Consider adding monitoring services like:
+
 - Prometheus + Grafana for metrics
 - ELK Stack for log aggregation
 - Health check endpoints

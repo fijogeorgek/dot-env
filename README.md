@@ -6,6 +6,8 @@ A SvelteKit application with MySQL database, Drizzle ORM, and Axiom logging inte
 
 - **SvelteKit** with TypeScript and TailwindCSS
 - **MySQL Database** with Drizzle ORM
+- **Nginx Reverse Proxy** with SSL/TLS support
+- **Let's Encrypt** automatic SSL certificates
 - **Axiom Logging** integration
 - **Docker** support for easy deployment
 - **Environment Variables** demonstration
@@ -23,10 +25,11 @@ A SvelteKit application with MySQL database, Drizzle ORM, and Axiom logging inte
    ```
 
 2. **Access the application:**
-   - Application: http://localhost:3000
+   - Application (via nginx): https://localhost
+   - Application (direct): http://localhost:3000
    - Database Admin: http://localhost:8080
 
-See [DOCKER.md](./DOCKER.md) for detailed Docker instructions.
+See [DOCKER.md](./DOCKER.md) for detailed Docker instructions and [NGINX.md](./NGINX.md) for nginx and SSL setup.
 
 ### Option 2: Local Development
 

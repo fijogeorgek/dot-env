@@ -75,9 +75,15 @@ start_services() {
     # Check if services are running
     if docker-compose ps | grep -q "Up"; then
         print_status "Services started successfully!"
-        print_status "Application: http://localhost:3000"
+        print_status "Application (via nginx): https://localhost (or your domain)"
+        print_status "Application (direct): http://localhost:3000"
         print_status "Database Admin (Adminer): http://localhost:8080"
         print_status "Database connection: localhost:3306"
+        echo ""
+        print_status "Note: HTTPS uses a self-signed certificate by default."
+        print_status "For production, setup your domain and SSL certificate:"
+        print_status "  $0 setup-domain yourdomain.com your@email.com"
+        print_status "  $0 setup-ssl yourdomain.com your@email.com"
     else
         print_error "Some services failed to start. Check logs with: docker-compose logs"
         exit 1
@@ -156,6 +162,68 @@ cleanup() {
     fi
 }
 
+# Setup domain configuration
+setup_domain() {
+    print_header "Setting up domain configuration"
+
+    local domain=$1
+    local email=$2
+
+    if [ -z "$domain" ] || [ -z "$email" ]; then
+        print_error "Usage: $0 setup-domain <domain> <email>"
+        print_error "Example: $0 setup-domain example.com admin@example.com"
+        exit 1
+    fi
+
+    if [ ! -f scripts/setup-domain.sh ]; then
+        print_error "Domain setup script not found: scripts/setup-domain.sh"
+        exit 1
+    fi
+
+    ./scripts/setup-domain.sh "$domain" "$email"
+}
+
+# Setup SSL certificate
+setup_ssl() {
+    print_header "Setting up SSL certificate"
+
+    local domain=$1
+    local email=$2
+    local staging=${3:-false}
+
+    if [ -z "$domain" ] || [ -z "$email" ]; then
+        print_error "Usage: $0 setup-ssl <domain> <email> [staging]"
+        print_error "Example: $0 setup-ssl example.com admin@example.com"
+        print_error "Example (staging): $0 setup-ssl example.com admin@example.com true"
+        exit 1
+    fi
+
+    if [ ! -f scripts/ssl-setup.sh ]; then
+        print_error "SSL setup script not found: scripts/ssl-setup.sh"
+        exit 1
+    fi
+
+    ./scripts/ssl-setup.sh "$domain" "$email" "$staging"
+}
+
+# Reload nginx configuration
+reload_nginx() {
+    print_header "Reloading nginx configuration"
+
+    check_docker
+
+    # Test configuration first
+    print_status "Testing nginx configuration..."
+    if docker-compose exec nginx nginx -t; then
+        print_status "Configuration test passed, reloading..."
+        docker-compose exec nginx nginx -s reload
+        print_status "Nginx reloaded successfully"
+    else
+        print_error "Nginx configuration test failed"
+        exit 1
+    fi
+}
+
 # Show help
 show_help() {
     echo "Docker management script for dot-env project"
@@ -169,6 +237,9 @@ show_help() {
     echo "  logs [service]  View logs (optionally for specific service)"
     echo "  migrate     Run database migrations"
     echo "  studio      Open Drizzle Studio"
+    echo "  setup-domain <domain> <email>  Setup domain configuration"
+    echo "  setup-ssl <domain> <email> [staging]  Setup SSL certificate"
+    echo "  reload-nginx    Reload nginx configuration"
     echo "  cleanup     Remove all containers, networks, and volumes"
     echo "  help        Show this help message"
     echo ""
@@ -176,6 +247,9 @@ show_help() {
     echo "  $0 start"
     echo "  $0 logs app"
     echo "  $0 migrate"
+    echo "  $0 setup-domain example.com admin@example.com"
+    echo "  $0 setup-ssl example.com admin@example.com"
+    echo "  $0 reload-nginx"
 }
 
 # Main script logic
@@ -197,6 +271,15 @@ case "${1:-help}" in
         ;;
     studio)
         db_studio
+        ;;
+    setup-domain)
+        setup_domain "$2" "$3"
+        ;;
+    setup-ssl)
+        setup_ssl "$2" "$3" "$4"
+        ;;
+    reload-nginx)
+        reload_nginx
         ;;
     cleanup)
         cleanup
