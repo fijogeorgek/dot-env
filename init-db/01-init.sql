@@ -1,0 +1,26 @@
+-- Initialize the database with proper character set and collation
+USE dotenv;
+
+-- Set proper character set and collation for the database
+ALTER DATABASE dotenv CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Create the items table (matching your Drizzle schema)
+CREATE TABLE IF NOT EXISTS items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description VARCHAR(1000),
+    category VARCHAR(100) NOT NULL,
+    price INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert some sample data
+INSERT INTO items (name, description, category, price) VALUES
+('Sample Item 1', 'This is a sample item for testing', 'Electronics', 2999),
+('Sample Item 2', 'Another sample item', 'Books', 1599),
+('Sample Item 3', 'Third sample item', 'Clothing', 4999);
+
+-- Grant necessary permissions (already handled by docker-compose environment variables)
+-- GRANT ALL PRIVILEGES ON dotenv.* TO 'dotenv_user'@'%';
+-- FLUSH PRIVILEGES;
